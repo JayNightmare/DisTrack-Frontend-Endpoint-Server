@@ -18,7 +18,7 @@ jobs:
                   username: ${{ secrets.LINODE_USER }} # Your Linode's SSH username
                   key: ${{ secrets.LINODE_SSH_KEY }} # Your Linode's SSH private key
                   script: |
-                      cd ~/endpoint/DisTrack-FE-Endpoint-Server
+                      cd ~/endpoint/DisTrack-Frontend-Endpoint-Server
                       git fetch --all
                       git reset --hard origin/prod
                       npm ci
