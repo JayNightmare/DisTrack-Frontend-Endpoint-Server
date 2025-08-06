@@ -2,11 +2,10 @@ const express = require("express");
 const path = require("path");
 const app = express();
 const { connectToDatabase } = require("./database.js");
-const PORT = 7071;
 const User = require("./User.js");
 const axios = require("axios");
 const session = require("express-session");
-const { API_KEY, SESSION_SECRET } = require("./config.js");
+const { API_KEY, SESSION_SECRET, PORT } = require("./config.js");
 
 app.use(express.json());
 
