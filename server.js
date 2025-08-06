@@ -1,26 +1,14 @@
 const express = require("express");
 const path = require("path");
 const app = express();
-const { connectToDatabase } = require("./database.js");
 const User = require("./User.js");
+const { connectToDatabase } = require("./database.js");
 const axios = require("axios");
-const session = require("express-session");
-const { API_KEY, SESSION_SECRET, PORT } = require("./config.js");
+const { API_KEY, PORT } = require("./config.js");
 
 app.use(express.json());
 
-// * Session Configuration
-app.use(
-    session({
-        secret: SESSION_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: false, // Set to true in production with HTTPS
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        },
-    })
-);
+connectToDatabase();
 
 app.use((req, res, next) => {
     if (req.method === "OPTIONS") {
@@ -143,8 +131,6 @@ app.use((req, res, next) => {
     console.log("Protected endpoint accessed:", req.method, req.path);
     return authenticateApiKey(req, res, next);
 });
-
-connectToDatabase();
 
 // * Enter Point
 app.get("/", (req, res) => {
