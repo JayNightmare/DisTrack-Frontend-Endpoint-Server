@@ -1,0 +1,29 @@
+{
+  "name": "distrack-endpoint",
+  "version": "0.2.1",
+  "description": "Endpoints for DisTrack Extension",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test-trends": "node test-trends.js",
+    "test-sessions": "node test-session-integration.js"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^5.0.1",
+    "express-session": "^1.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.10.0",
+    "mongoose": "^8.8.1",
+    "nginx": "^1.0.8",
+    "node-cron": "^3.0.3",
+    "passport": "^0.7.0",
+    "passport-discord": "^0.1.4"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
