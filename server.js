@@ -117,7 +117,7 @@ async function authenticateApiKey(req, res, next) {
 }
 
 app.use((req, res, next) => {
-    const publicEndpoints = ["/", "/health", "/user/:userId"];
+    const publicEndpoints = ["/", "/health", "/user"];
 
     const isPublicEndpoint =
         publicEndpoints.includes(req.path) && req.method === "GET";
