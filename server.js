@@ -122,7 +122,7 @@ app.use((req, res, next) => {
     const isPublicEndpoint =
         publicEndpoints.includes(req.path) && req.method === "GET";
 
-    if (isPublicEndpoint || isPublicBotSharable) {
+    if (isPublicEndpoint) {
         console.log("Public endpoint accessed:", req.method, req.path);
         return next();
     }
