@@ -14,9 +14,9 @@ jobs:
             - name: SSH Deploy
               uses: appleboy/ssh-action@v0.1.9
               with:
-                  host: ${{ secrets.LINODE_HOST }}
-                  username: ${{ secrets.LINODE_USER }}
-                  key: ${{ secrets.LINODE_SSH_KEY }}
+                  host: ${{ secrets.LINODE_HOST }} # Your Linode's IP address
+                  username: ${{ secrets.LINODE_USER }} # Your Linode's SSH username
+                  key: ${{ secrets.LINODE_SSH_KEY }} # Your Linode's SSH private key
                   script: |
                       cd ~/endpoint/DisTrack-FE-Endpoint-Server
                       git fetch --all
