@@ -25,6 +25,138 @@ app.get("/health", (req, res) => {
     });
 });
 
+// * Generate custom embed image for social media
+app.get("/embed-image/:userId", async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const user = await User.findOne({ userId });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const totalTimeFormatted = Math.floor(user.totalCodingTime / 3600);
+        const topLanguages = Object.entries(user.languages)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 3)
+            .map(([lang, time]) => ({ lang, time }));
+
+        // Generate SVG image with user stats
+        const svg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+        </linearGradient>
+        <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge> 
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+    
+    <!-- Background -->
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    
+    <!-- Main container -->
+    <rect x="60" y="60" width="1080" height="510" rx="20" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+    
+    <!-- DisTrack Logo/Title -->
+    <text x="100" y="130" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white">
+        DisTrack Profile
+    </text>
+    
+    <!-- User Info -->
+    <text x="100" y="190" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" filter="url(#glow)">
+        ${(user.displayName || user.username).substring(0, 20)}
+    </text>
+    <text x="100" y="230" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.8)">
+        @${user.username.substring(0, 25)}
+    </text>
+    
+    <!-- Stats Grid -->
+    <!-- Total Coding Time -->
+    <rect x="100" y="280" width="240" height="120" rx="15" fill="rgba(255,255,255,0.15)"/>
+    <text x="220" y="320" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+        ${totalTimeFormatted}h
+    </text>
+    <text x="220" y="350" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)" text-anchor="middle">
+        Total Coded
+    </text>
+    <text x="220" y="375" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+        🚀
+    </text>
+    
+    <!-- Current Streak -->
+    <rect x="360" y="280" width="240" height="120" rx="15" fill="rgba(255,255,255,0.15)"/>
+    <text x="480" y="320" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+        ${user.currentStreak}
+    </text>
+    <text x="480" y="350" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)" text-anchor="middle">
+        Current Streak
+    </text>
+    <text x="480" y="375" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+        🔥
+    </text>
+    
+    <!-- Longest Streak -->
+    <rect x="620" y="280" width="240" height="120" rx="15" fill="rgba(255,255,255,0.15)"/>
+    <text x="740" y="320" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+        ${user.longestStreak}
+    </text>
+    <text x="740" y="350" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)" text-anchor="middle">
+        Longest Streak
+    </text>
+    <text x="740" y="375" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+        📈
+    </text>
+    
+    <!-- Languages -->
+    <rect x="880" y="280" width="240" height="120" rx="15" fill="rgba(255,255,255,0.15)"/>
+    <text x="1000" y="320" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+        ${Object.keys(user.languages).length}
+    </text>
+    <text x="1000" y="350" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)" text-anchor="middle">
+        Languages
+    </text>
+    <text x="1000" y="375" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+        💻
+    </text>
+    
+    <!-- Top Languages -->
+    <text x="100" y="460" font-family="Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.9)">
+        Top Languages: ${topLanguages.map((l) => l.lang).join(" • ")}
+    </text>
+    
+    <!-- Footer -->
+    <text x="100" y="520" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.7)">
+        View full profile at distrack.endpoint-system.uk
+    </text>
+</svg>`;
+
+        res.setHeader("Content-Type", "image/svg+xml");
+        res.setHeader("Cache-Control", "public, max-age=3600"); // Cache for 1 hour
+        return res.send(svg);
+    } catch (error) {
+        console.error("Error generating embed image:", error);
+
+        // Fallback to a simple error image
+        const errorSvg = `
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="630" fill="#667eea"/>
+    <text x="600" y="315" font-family="Arial, sans-serif" font-size="48" fill="white" text-anchor="middle">
+        DisTrack Profile
+    </text>
+</svg>`;
+
+        res.setHeader("Content-Type", "image/svg+xml");
+        return res.send(errorSvg);
+    }
+});
+
 // * Get user by user id and check the User-Agent header for bots/crawlers (Discord, Twitter, Facebook, etc.)
 app.get("/user/:userId", async (req, res) => {
     const { userId } = req.params;
@@ -65,6 +197,22 @@ app.get("/user/:userId", async (req, res) => {
             const avatarUrl =
                 user.avatarUrl || "https://avatar.iran.liara.run/public";
 
+            // Create a more engaging description
+            const languagesList = Object.keys(user.languages)
+                .slice(0, 3)
+                .join(", ");
+            const moreLanguages =
+                Object.keys(user.languages).length > 3
+                    ? ` +${Object.keys(user.languages).length - 3} more`
+                    : "";
+
+            const enhancedDescription = `Coding warrior with ${totalTimeFormatted}h of experience! 🚀
+Current streak: ${user.currentStreak} days 🔥 | Best streak: ${user.longestStreak} days 📈
+Languages: ${languagesList}${moreLanguages} | View full profile on DisTrack`;
+
+            // Generate a custom embed image URL (we'll create an endpoint for this)
+            const embedImageUrl = `https://distrack.endpoint-system.uk/embed-image/${userId}`;
+
             const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -73,27 +221,35 @@ app.get("/user/:userId", async (req, res) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${user.displayName || user.username} - DisTrack Profile</title>
     
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="${
+    <!-- Enhanced Open Graph Meta Tags -->
+    <meta property="og:title" content="🏆 ${
         user.displayName || user.username
-    } - DisTrack Profile">
-    <meta property="og:description" content="🚀 ${totalTimeFormatted}h coded | 🔥 ${
-                user.currentStreak
-            } day streak | 📈 ${user.longestStreak} longest streak">
-    <meta property="og:image" content="${avatarUrl}">
+    } - DisTrack Coding Profile">
+    <meta property="og:description" content="${enhancedDescription}">
+    <meta property="og:image" content="${embedImageUrl}">
+    <meta property="og:image:alt" content="${
+        user.displayName || user.username
+    }'s coding statistics on DisTrack">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:url" content="https://distrack.endpoint-system.uk/user/${userId}">
     <meta property="og:type" content="profile">
-    <meta property="og:site_name" content="DisTrack">
+    <meta property="og:site_name" content="DisTrack - Coding Progress Tracker">
     
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="${
+    <!-- Enhanced Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="🏆 ${
         user.displayName || user.username
     } - DisTrack Profile">
-    <meta name="twitter:description" content="🚀 ${totalTimeFormatted}h coded | 🔥 ${
-                user.currentStreak
-            } day streak | 📈 ${user.longestStreak} longest streak">
-    <meta name="twitter:image" content="${avatarUrl}">
+    <meta name="twitter:description" content="${enhancedDescription}">
+    <meta name="twitter:image" content="${embedImageUrl}">
+    <meta name="twitter:image:alt" content="${
+        user.displayName || user.username
+    }'s coding statistics">
+    
+    <!-- Discord-specific enhancements -->
+    <meta name="theme-color" content="#667eea">
+    <meta property="og:color" content="#667eea">
     
     <!-- Additional Meta Tags -->
     <meta name="description" content="${
@@ -198,6 +354,10 @@ app.get("/user/:userId", async (req, res) => {
                 `Bot/crawler detected: ${userAgent.substring(0, 50)}...`
             );
             return res.setHeader("Content-Type", "text/html").send(html);
+        } else if (req.query.redirect) {
+            return res.redirect(
+                `https://distrack.endpoint-system.uk/user/${userId}`
+            );
         }
 
         // Return JSON for regular requests
