@@ -22,4 +22,4 @@ jobs:
                       git fetch --all
                       git reset --hard origin/prod
                       npm ci
-                      pm2 restart 15
+                      pm2 restart 17
