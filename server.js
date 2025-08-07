@@ -41,6 +41,44 @@ app.get("/embed-image/:userId", async (req, res) => {
             .slice(0, 3)
             .map(([lang, time]) => ({ lang, time }));
 
+        const avatarUrl =
+            user.avatarUrl || "https://avatar.iran.liara.run/public";
+        const userBio = user.bio
+            ? user.bio.substring(0, 80) + (user.bio.length > 80 ? "..." : "")
+            : "No bio available";
+        const displayName = (user.displayName || user.username).substring(
+            0,
+            20
+        );
+        const username = user.username.substring(0, 25);
+
+        // Try to fetch the user's avatar and convert to base64 for embedding
+        let avatarDataUrl = null;
+        try {
+            if (
+                avatarUrl &&
+                avatarUrl !== "https://avatar.iran.liara.run/public"
+            ) {
+                const avatarResponse = await axios.get(avatarUrl, {
+                    responseType: "arraybuffer",
+                    timeout: 5000,
+                    headers: {
+                        "User-Agent": "DisTrack-Bot/1.0",
+                    },
+                });
+                const avatarBase64 = Buffer.from(
+                    avatarResponse.data,
+                    "binary"
+                ).toString("base64");
+                const contentType =
+                    avatarResponse.headers["content-type"] || "image/jpeg";
+                avatarDataUrl = `data:${contentType};base64,${avatarBase64}`;
+            }
+        } catch (avatarError) {
+            console.log("Failed to fetch avatar:", avatarError.message);
+            // Will use placeholder instead
+        }
+
         // Generate SVG image with user stats
         const svg = `
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
@@ -56,84 +94,130 @@ app.get("/embed-image/:userId", async (req, res) => {
                 <feMergeNode in="SourceGraphic"/>
             </feMerge>
         </filter>
+        <filter id="shadow">
+            <feDropShadow dx="2" dy="2" stdDeviation="4" flood-opacity="0.3"/>
+        </filter>
+        <clipPath id="avatar-clip">
+            <circle cx="180" cy="180" r="50"/>
+        </clipPath>
     </defs>
     
     <!-- Background -->
     <rect width="1200" height="630" fill="url(#bg)"/>
     
     <!-- Main container -->
-    <rect x="60" y="60" width="1080" height="510" rx="20" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+    <rect x="40" y="40" width="1120" height="550" rx="25" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2" filter="url(#shadow)"/>
     
-    <!-- DisTrack Logo/Title -->
-    <text x="100" y="130" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white">
-        DisTrack Profile
-    </text>
+    <!-- Header Section with Logo and Branding -->
+    <rect x="60" y="60" width="1080" height="80" rx="15" fill="rgba(255,255,255,0.05)"/>
+    
+    <!-- DisTrack Logo (stylized D) -->
+    <circle cx="110" cy="100" r="25" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="2"/>
+    <text x="110" y="110" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">D</text>
+    
+    <!-- DisTrack Brand Text -->
+    <text x="150" y="95" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white">DisTrack</text>
+    <text x="150" y="115" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.7)">Coding Progress Tracker</text>
+    
+    <!-- User Profile Section -->
+    <!-- Profile Picture Background Circle -->
+    <circle cx="180" cy="180" r="55" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.4)" stroke-width="3"/>
+    
+    <!-- Profile Picture -->
+    ${
+        avatarDataUrl
+            ? `<image href="${avatarDataUrl}" x="130" y="130" width="100" height="100" clip-path="url(#avatar-clip)" preserveAspectRatio="xMidYMid slice"/>`
+            : `<circle cx="180" cy="180" r="50" fill="rgba(255,255,255,0.1)"/>
+         <text x="180" y="190" font-family="Arial, sans-serif" font-size="32" fill="rgba(255,255,255,0.6)" text-anchor="middle">👤</text>`
+    }
     
     <!-- User Info -->
-    <text x="100" y="190" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" filter="url(#glow)">
-        ${(user.displayName || user.username).substring(0, 20)}
+    <text x="260" y="160" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" filter="url(#glow)">
+        ${displayName}
     </text>
-    <text x="100" y="230" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.8)">
-        @${user.username.substring(0, 25)}
+    <text x="260" y="185" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)">
+        @${username}
+    </text>
+    
+    <!-- User Bio -->
+    <text x="260" y="210" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.7)">
+        ${userBio}
     </text>
     
     <!-- Stats Grid -->
     <!-- Total Coding Time -->
-    <rect x="100" y="280" width="240" height="120" rx="15" fill="rgba(255,255,255,0.15)"/>
-    <text x="220" y="320" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+    <rect x="80" y="260" width="200" height="100" rx="15" fill="rgba(255,255,255,0.15)" filter="url(#shadow)"/>
+    <text x="180" y="290" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">
         ${totalTimeFormatted}h
     </text>
-    <text x="220" y="350" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)" text-anchor="middle">
+    <text x="180" y="315" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)" text-anchor="middle">
         Total Coded
     </text>
-    <text x="220" y="375" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+    <text x="180" y="335" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle">
         🚀
     </text>
     
     <!-- Current Streak -->
-    <rect x="360" y="280" width="240" height="120" rx="15" fill="rgba(255,255,255,0.15)"/>
-    <text x="480" y="320" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+    <rect x="300" y="260" width="200" height="100" rx="15" fill="rgba(255,255,255,0.15)" filter="url(#shadow)"/>
+    <text x="400" y="290" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">
         ${user.currentStreak}
     </text>
-    <text x="480" y="350" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)" text-anchor="middle">
+    <text x="400" y="315" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)" text-anchor="middle">
         Current Streak
     </text>
-    <text x="480" y="375" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+    <text x="400" y="335" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle">
         🔥
     </text>
     
     <!-- Longest Streak -->
-    <rect x="620" y="280" width="240" height="120" rx="15" fill="rgba(255,255,255,0.15)"/>
-    <text x="740" y="320" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+    <rect x="520" y="260" width="200" height="100" rx="15" fill="rgba(255,255,255,0.15)" filter="url(#shadow)"/>
+    <text x="620" y="290" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">
         ${user.longestStreak}
     </text>
-    <text x="740" y="350" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)" text-anchor="middle">
+    <text x="620" y="315" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)" text-anchor="middle">
         Longest Streak
     </text>
-    <text x="740" y="375" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+    <text x="620" y="335" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle">
         📈
     </text>
     
     <!-- Languages -->
-    <rect x="880" y="280" width="240" height="120" rx="15" fill="rgba(255,255,255,0.15)"/>
-    <text x="1000" y="320" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+    <rect x="740" y="260" width="200" height="100" rx="15" fill="rgba(255,255,255,0.15)" filter="url(#shadow)"/>
+    <text x="840" y="290" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">
         ${Object.keys(user.languages).length}
     </text>
-    <text x="1000" y="350" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.8)" text-anchor="middle">
+    <text x="840" y="315" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)" text-anchor="middle">
         Languages
     </text>
-    <text x="1000" y="375" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+    <text x="840" y="335" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle">
         💻
     </text>
     
+    <!-- Additional Info Section -->
+    <rect x="80" y="380" width="860" height="80" rx="15" fill="rgba(255,255,255,0.08)" filter="url(#shadow)"/>
+    
     <!-- Top Languages -->
-    <text x="100" y="460" font-family="Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.9)">
-        Top Languages: ${topLanguages.map((l) => l.lang).join(" • ")}
+    <text x="100" y="405" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+        🏆 Top Languages:
+    </text>
+    <text x="100" y="425" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.9)">
+        ${topLanguages.map((l) => l.lang).join(" • ")}
     </text>
     
-    <!-- Footer -->
-    <text x="100" y="520" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.7)">
-        View full profile at distrack.endpoint-system.uk
+    <!-- Social Links Section (if available) -->
+    <text x="100" y="450" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.7)">
+        📊 View detailed analytics and progress at distrack.endpoint-system.uk
+    </text>
+    
+    <!-- Decorative Elements -->
+    <!-- Corner accent -->
+    <circle cx="1050" cy="150" r="3" fill="rgba(255,255,255,0.3)"/>
+    <circle cx="1070" cy="140" r="2" fill="rgba(255,255,255,0.2)"/>
+    <circle cx="1090" cy="160" r="1.5" fill="rgba(255,255,255,0.1)"/>
+    
+    <!-- Bottom right branding -->
+    <text x="1120" y="580" font-family="Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.5)" text-anchor="end">
+        Powered by DisTrack
     </text>
 </svg>`;
 
@@ -206,9 +290,17 @@ app.get("/user/:userId", async (req, res) => {
                     ? ` +${Object.keys(user.languages).length - 3} more`
                     : "";
 
-            const enhancedDescription = `Coding warrior with ${totalTimeFormatted}h of experience! 🚀
-Current streak: ${user.currentStreak} days 🔥 | Best streak: ${user.longestStreak} days 📈
-Languages: ${languagesList}${moreLanguages} | View full profile on DisTrack`;
+            const bioText = user.bio
+                ? `"${user.bio.substring(0, 60)}${
+                      user.bio.length > 60 ? "..." : ""
+                  }"`
+                : "";
+            const enhancedDescription = `${
+                bioText ? bioText + "\n" : ""
+            }🚀 ${totalTimeFormatted}h coded | � ${
+                user.currentStreak
+            } day streak | 📈 ${user.longestStreak} best streak
+💻 ${languagesList}${moreLanguages} | 📊 View full analytics on DisTrack`;
 
             // Generate a custom embed image URL (we'll create an endpoint for this)
             const embedImageUrl = `https://distrack.endpoint-system.uk/embed-image/${userId}`;
