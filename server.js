@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const sharp = require("sharp");
 const app = express();
 const User = require("./User.js");
 const { connectToDatabase } = require("./database.js");
