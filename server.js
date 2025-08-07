@@ -221,9 +221,12 @@ app.get("/embed-image/:userId", async (req, res) => {
     </text>
 </svg>`;
 
-        res.setHeader("Content-Type", "image/svg+xml");
+        const svgBuffer = Buffer.from(svg);
+        const pngBuffer = await sharp(svgBuffer).png().toBuffer();
+
+        res.setHeader("Content-Type", "image/png");
         res.setHeader("Cache-Control", "public, max-age=3600"); // Cache for 1 hour
-        return res.send(svg);
+        return res.send(pngBuffer);
     } catch (error) {
         console.error("Error generating embed image:", error);
 
@@ -236,8 +239,11 @@ app.get("/embed-image/:userId", async (req, res) => {
     </text>
 </svg>`;
 
-        res.setHeader("Content-Type", "image/svg+xml");
-        return res.send(errorSvg);
+        const errorSvgCon = Buffer.from(errorSvg);
+        const errorPngBuffer = await sharp(errorSvgCon).png().toBuffer();
+
+        res.setHeader("Content-Type", "image/png");
+        return res.send(errorPngBuffer);
     }
 });
 
@@ -303,7 +309,7 @@ app.get("/user/:userId", async (req, res) => {
 💻 ${languagesList}${moreLanguages} | 📊 View full analytics on DisTrack`;
 
             // Generate a custom embed image URL (we'll create an endpoint for this)
-            const embedImageUrl = `https://distrack.endpoint-system.uk/embed-image/${userId}`;
+            const embedImageUrl = `https://share.endpoint-system.uk/embed-image/${userId}?v=${Date.now()}`;
 
             const html = `
 <!DOCTYPE html>
