@@ -21,7 +21,8 @@
     "nginx": "^1.0.8",
     "node-cron": "^3.0.3",
     "passport": "^0.7.0",
-    "passport-discord": "^0.1.4"
+    "passport-discord": "^0.1.4",
+    "sharp": "^0.34.3"
   },
   "engines": {
     "node": "20.x"
