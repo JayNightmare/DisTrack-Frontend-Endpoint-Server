@@ -54,9 +54,13 @@ const userSchema = new mongoose.Schema(
             xml: { type: Number, default: 0 },
             other: { type: Number, default: 0 }, // Catch-all for any other
         },
+        // //
         lastSessionDate: { type: Date, default: null }, // New field to track last coding session date
         archived: { type: Boolean, default: false }, // New field for archiving inactive users
         archivedAt: { type: Date, default: null }, // New field to track when user was archived
+        // //
+        premium: { type: Boolean, default: false }, // New field for premium status
+        sponsor: { type: Boolean, default: false }, // New field for sponsor status
     },
     {
         timestamps: true, // Automatically manage createdAt and updatedAt fields
