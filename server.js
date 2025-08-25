@@ -67,8 +67,8 @@ app.get("/embed-image/:userId", async (req, res) => {
         );
         const currentStreak = user.currentStreak || 0;
         const longestStreak = user.longestStreak || 0;
-        const profileUrl = `https://distrack.endpoint-system.uk/user/${userId}`;
-        const footerText = "Start Tracking Today — distrack.endpoint-system.uk";
+        const profileUrl = `https://distrack.nexusgit.info/user/${userId}`;
+        const footerText = "Start Tracking Today — distrack.nexusgit.info";
         const languages = user.languages || {};
         const topLanguages = Object.entries(languages)
             .sort(([, a], [, b]) => (b || 0) - (a || 0))
@@ -145,7 +145,7 @@ app.get("/embed-image/:userId", async (req, res) => {
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
     <rect width="1200" height="630" fill="#667eea"/>
     <text x="600" y="315" font-family="Arial, sans-serif" font-size="48" fill="white" text-anchor="middle">DisTrack</text>
-    <text x="600" y="360" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">Start Tracking Today — distrack.endpoint-system.uk</text>
+    <text x="600" y="360" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">Start Tracking Today — distrack.nexusgit.info</text>
 </svg>`;
 
         const errorSvgCon = Buffer.from(errorSvg);
@@ -193,13 +193,13 @@ app.get("/user/:userId", async (req, res) => {
         if (isBot) {
             // Return HTML with Open Graph and Twitter Card meta tags (per new requirements)
             const displayName = user.displayName || user.username;
-            const profileUrl = `https://distrack.endpoint-system.uk/user/${userId}`;
+            const profileUrl = `https://distrack.nexusgit.info/user/${userId}`;
             const embedImageUrl = `${req.protocol}://${req.get(
                 "host"
             )}/embed-image/${userId}?v=${Date.now()}`;
             const authorText = "DisTrack - Code Tracking Tool";
             const footerText =
-                "Start Tracking Today — https://distrack.endpoint-system.uk";
+                "Start Tracking Today — https://distrack.nexusgit.info";
 
             const html = `
 <!DOCTYPE html>
@@ -265,7 +265,7 @@ app.get("/user/:userId", async (req, res) => {
 <body>
     <div class="profile-card">
     <h1>${displayName}'s Profile</h1>
-    <p class="cta">Start Tracking Today — <a href="https://distrack.endpoint-system.uk" target="_blank" rel="noopener">distrack.endpoint-system.uk</a></p>
+    <p class="cta">Start Tracking Today — <a href="https://distrack.nexusgit.info" target="_blank" rel="noopener">distrack.nexusgit.info</a></p>
     </div>
     
     <script>
@@ -285,7 +285,7 @@ app.get("/user/:userId", async (req, res) => {
             return res.setHeader("Content-Type", "text/html").send(html);
         } else if (req.query.redirect) {
             return res.redirect(
-                `https://distrack.endpoint-system.uk/user/${userId}`
+                `https://distrack.nexusgit.info/user/${userId}`
             );
         }
 
